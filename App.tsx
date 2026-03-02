@@ -215,17 +215,6 @@ export default function App() {
       return;
     }
 
-    // verify inventory item and availability
-    const inventoryItem = inventory.find(i => i.name === formData.itemName);
-    if (!inventoryItem) {
-      alert('Cannot issue: item not found in inventory.');
-      return;
-    }
-    if (inventoryItem.availableQuantity <= 0) {
-      alert('Cannot issue: item is out of stock.');
-      return;
-    }
-
     const today = new Date().toISOString().split('T')[0];
     const isOverdue = today > formData.expectedReturnDate;
     
@@ -236,12 +225,6 @@ export default function App() {
     };
 
     setRecords(prev => [newRecord, ...prev]);
-
-    // decrement stock since item has been issued
-    setInventory(prev => prev.map(i => 
-      i.id === inventoryItem.id ? { ...i, availableQuantity: i.availableQuantity - 1 } : i
-    ));
-
     setFormData({
       studentName: '',
       rollNumber: '',
@@ -254,8 +237,8 @@ export default function App() {
       expectedReturnDate: ''
     });
     
-    // Scroll to records table
-    document.getElementById('issue-records')?.scrollIntoView({ behavior: 'smooth' });
+    // Scroll to table
+    document.getElementById('tracking-system')?.scrollIntoView({ behavior: 'smooth' });
   };
 
   const handleInventorySubmit = (e: React.FormEvent) => {
@@ -298,19 +281,9 @@ export default function App() {
       alert("Unauthorized: Only admin can perform this action.");
       return;
     }
-    // update record status
-    const targetRecord = records.find(r => r.id === id);
-    if (targetRecord && targetRecord.status !== 'Returned') {
-      setRecords(prev => prev.map(rec => 
-        rec.id === id ? { ...rec, status: 'Returned' } : rec
-      ));
-
-      // restore inventory for the returned item
-      setInventory(prev => prev.map(i => 
-        i.name === targetRecord.itemName ? { ...i, availableQuantity: i.availableQuantity + 1 } : i
-      ));
-    }
-
+    setRecords(prev => prev.map(rec => 
+      rec.id === id ? { ...rec, status: 'Returned' } : rec
+    ));
     setShowReturnConfirm(false);
     setReturnTargetId(null);
   };
@@ -487,7 +460,7 @@ export default function App() {
       <header className="citk-header text-white py-4 px-4 md:px-8 border-b-4 border-yellow-500">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-4">
           <img 
-            src="/logo.jpg" 
+            src="https://www.cit.ac.in/wp-content/uploads/2020/09/cit-logo.png" 
             alt="CITK Logo" 
             className="h-20 w-auto bg-white p-1 rounded-sm"
             referrerPolicy="no-referrer"
@@ -683,6 +656,22 @@ export default function App() {
             <p className="text-xl text-white/90 mb-8 font-normal italic">
               Digitizing Campus Sports Equipment Management for Enhanced Efficiency
             </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <a 
+                href="#sports-issue-system"
+                className="bg-[#4a9c64] text-white px-8 py-3 rounded-sm font-bold uppercase tracking-widest hover:bg-[#3a7d50] transition-all shadow-lg inline-flex items-center gap-2"
+              >
+                Access Issue System <ChevronRight size={18} />
+              </a>
+              {!isAdmin && (
+                <button 
+                  onClick={() => setShowLogin(true)}
+                  className="bg-white text-[#4a9c64] border-2 border-[#4a9c64] px-8 py-3 rounded-sm font-bold uppercase tracking-widest hover:bg-gray-50 transition-all shadow-lg"
+                >
+                  Admin Login
+                </button>
+              )}
+            </div>
           </div>
         </section>
 
@@ -1371,11 +1360,11 @@ export default function App() {
           <div>
             <h4 className="text-lg font-bold mb-6 uppercase border-b border-white/20 pb-2">Quick Links</h4>
             <ul className="space-y-2 text-sm opacity-90">
-              <li><a href="https://cit.ac.in/" target="_blank" rel="noopener noreferrer" className="hover:underline">Official Website</a></li>
-              <li><a href="https://admission.cit.ac.in/" target="_blank" rel="noopener noreferrer" className="hover:underline">Admission Portal</a></li>
-              <li><a href="https://cit.ac.in/uploads/1766814874.pdf" target="_blank" rel="noopener noreferrer" className="hover:underline">Academic Calendar 2026</a></li>
-              <li><a href="https://cit.ac.in/institute-contact" target="_blank" rel="noopener noreferrer" className="hover:underline">Campus Contact / How To Reach</a></li>
-              <li><a href="https://cit.ac.in/student-grievance-portal" target="_blank" rel="noopener noreferrer" className="hover:underline">Student Grievance Portal</a></li>
+              <li><a href="#" className="hover:underline">Official Website</a></li>
+              <li><a href="#" className="hover:underline">Student Portal</a></li>
+              <li><a href="#" className="hover:underline">Academic Calendar</a></li>
+              <li><a href="#" className="hover:underline">Campus Map</a></li>
+              <li><a href="#" className="hover:underline">Grievance Redressal</a></li>
             </ul>
           </div>
           <div>
