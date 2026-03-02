@@ -683,22 +683,6 @@ export default function App() {
             <p className="text-xl text-white/90 mb-8 font-normal italic">
               Digitizing Campus Sports Equipment Management for Enhanced Efficiency
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a 
-                href="#sports-issue-system"
-                className="bg-[#4a9c64] text-white px-8 py-3 rounded-sm font-bold uppercase tracking-widest hover:bg-[#3a7d50] transition-all shadow-lg inline-flex items-center gap-2"
-              >
-                Access Issue System <ChevronRight size={18} />
-              </a>
-              {!isAdmin && (
-                <button 
-                  onClick={() => setShowLogin(true)}
-                  className="bg-white text-[#4a9c64] border-2 border-[#4a9c64] px-8 py-3 rounded-sm font-bold uppercase tracking-widest hover:bg-gray-50 transition-all shadow-lg"
-                >
-                  Admin Login
-                </button>
-              )}
-            </div>
           </div>
         </section>
 
@@ -1387,7 +1371,7 @@ export default function App() {
           <div>
             <h4 className="text-lg font-bold mb-6 uppercase border-b border-white/20 pb-2">Quick Links</h4>
             <ul className="space-y-2 text-sm opacity-90">
-              <li><a href="#" className="hover:underline">Official Website</a></li>
+              <li><a href="https://cit.ac.in/" target="_blank" rel="noopener noreferrer" className="hover:underline">Official Website</a></li>
               <li><a href="#" className="hover:underline">Student Portal</a></li>
               <li><a href="#" className="hover:underline">Academic Calendar</a></li>
               <li><a href="#" className="hover:underline">Campus Map</a></li>
