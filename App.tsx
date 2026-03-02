@@ -1372,10 +1372,10 @@ export default function App() {
             <h4 className="text-lg font-bold mb-6 uppercase border-b border-white/20 pb-2">Quick Links</h4>
             <ul className="space-y-2 text-sm opacity-90">
               <li><a href="https://cit.ac.in/" target="_blank" rel="noopener noreferrer" className="hover:underline">Official Website</a></li>
-              <li><a href="#" className="hover:underline">Student Portal</a></li>
-              <li><a href="#" className="hover:underline">Academic Calendar</a></li>
-              <li><a href="#" className="hover:underline">Campus Map</a></li>
-              <li><a href="#" className="hover:underline">Grievance Redressal</a></li>
+              <li><a href="https://admission.cit.ac.in/" target="_blank" rel="noopener noreferrer" className="hover:underline">Admission Portal</a></li>
+              <li><a href="https://cit.ac.in/uploads/1766814874.pdf" target="_blank" rel="noopener noreferrer" className="hover:underline">Academic Calendar 2026</a></li>
+              <li><a href="https://cit.ac.in/institute-contact" target="_blank" rel="noopener noreferrer" className="hover:underline">Campus Contact / How To Reach</a></li>
+              <li><a href="https://cit.ac.in/student-grievance-portal" target="_blank" rel="noopener noreferrer" className="hover:underline">Student Grievance Portal</a></li>
             </ul>
           </div>
           <div>
