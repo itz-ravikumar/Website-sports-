@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Times New Roman", Times, serif;
+  --color-citk-primary: #4a9c64;
+  --color-citk-gold: #ffd700;
+}
+
+@layer base {
+  body {
+    @apply font-serif bg-white text-gray-900;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif font-bold;
+  }
+}
+
+.citk-header {
+  background-color: var(--color-citk-primary);
+}
+
+.citk-nav-hover:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.citk-table th {
+  background-color: #f3f4f6;
+  @apply border-b border-gray-300 px-4 py-2 text-left text-sm font-bold uppercase;
+}
+
+.citk-table td {
+  @apply border-b border-gray-200 px-4 py-3 text-sm;
+}
+
+.status-active {
+  @apply bg-green-100 text-green-800 px-2 py-1 rounded-sm text-xs font-bold uppercase;
+}
+
+.status-overdue {
+  @apply bg-red-100 text-red-800 px-2 py-1 rounded-sm text-xs font-bold uppercase;
+}
+
+.status-returned {
+  @apply bg-gray-100 text-gray-800 px-2 py-1 rounded-sm text-xs font-bold uppercase;
+}
