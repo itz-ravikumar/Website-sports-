@@ -215,6 +215,17 @@ export default function App() {
       return;
     }
 
+    // verify inventory item and availability
+    const inventoryItem = inventory.find(i => i.name === formData.itemName);
+    if (!inventoryItem) {
+      alert('Cannot issue: item not found in inventory.');
+      return;
+    }
+    if (inventoryItem.availableQuantity <= 0) {
+      alert('Cannot issue: item is out of stock.');
+      return;
+    }
+
     const today = new Date().toISOString().split('T')[0];
     const isOverdue = today > formData.expectedReturnDate;
     
@@ -225,6 +236,12 @@ export default function App() {
     };
 
     setRecords(prev => [newRecord, ...prev]);
+
+    // decrement stock since item has been issued
+    setInventory(prev => prev.map(i => 
+      i.id === inventoryItem.id ? { ...i, availableQuantity: i.availableQuantity - 1 } : i
+    ));
+
     setFormData({
       studentName: '',
       rollNumber: '',
@@ -237,8 +254,8 @@ export default function App() {
       expectedReturnDate: ''
     });
     
-    // Scroll to table
-    document.getElementById('tracking-system')?.scrollIntoView({ behavior: 'smooth' });
+    // Scroll to records table
+    document.getElementById('issue-records')?.scrollIntoView({ behavior: 'smooth' });
   };
 
   const handleInventorySubmit = (e: React.FormEvent) => {
@@ -281,9 +298,19 @@ export default function App() {
       alert("Unauthorized: Only admin can perform this action.");
       return;
     }
-    setRecords(prev => prev.map(rec => 
-      rec.id === id ? { ...rec, status: 'Returned' } : rec
-    ));
+    // update record status
+    const targetRecord = records.find(r => r.id === id);
+    if (targetRecord && targetRecord.status !== 'Returned') {
+      setRecords(prev => prev.map(rec => 
+        rec.id === id ? { ...rec, status: 'Returned' } : rec
+      ));
+
+      // restore inventory for the returned item
+      setInventory(prev => prev.map(i => 
+        i.name === targetRecord.itemName ? { ...i, availableQuantity: i.availableQuantity + 1 } : i
+      ));
+    }
+
     setShowReturnConfirm(false);
     setReturnTargetId(null);
   };
@@ -460,7 +487,7 @@ export default function App() {
       <header className="citk-header text-white py-4 px-4 md:px-8 border-b-4 border-yellow-500">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-4">
           <img 
-            src="https://www.cit.ac.in/wp-content/uploads/2020/09/cit-logo.png" 
+            src="/logo.jpg" 
             alt="CITK Logo" 
             className="h-20 w-auto bg-white p-1 rounded-sm"
             referrerPolicy="no-referrer"
