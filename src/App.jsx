@@ -20,55 +20,22 @@ import {
   Download
 } from 'lucide-react';
 
-interface SportsRecord {
-  id: string;
-  studentName: string;
-  rollNumber: string;
-  branch: string;
-  program: string;
-  year: string;
-  itemName: string;
-  category: string;
-  issueDate: string;
-  expectedReturnDate: string;
-  status: 'Active' | 'Overdue' | 'Returned';
-}
-
-interface InventoryItem {
-  id: string;
-  name: string;
-  totalQuantity: number;
-  availableQuantity: number;
-  condition: 'Good' | 'Damaged' | 'Needs Replacement';
-}
-
-interface SportsRequest {
-  id: string;
-  studentName: string;
-  rollNumber: string;
-  branch: string;
-  program: string;
-  year: string;
-  itemName: string;
-  requestDate: string;
-  status: 'Pending' | 'Approved' | 'Rejected';
-}
 
 export default function App() {
-  const [records, setRecords] = useState<SportsRecord[]>([]);
-  const [inventory, setInventory] = useState<InventoryItem[]>([]);
-  const [requests, setRequests] = useState<SportsRequest[]>([]);
+  const [records, setRecords] = useState([]);
+  const [inventory, setInventory] = useState([]);
+  const [requests, setRequests] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [studentStatusRoll, setStudentStatusRoll] = useState('');
   const [showStatusResult, setShowStatusResult] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [currentPage, setCurrentPage] = useState<'home' | 'inventory'>('home');
+  const [currentPage, setCurrentPage] = useState('home');
   const [showLogin, setShowLogin] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [showForgot, setShowForgot] = useState(false);
   const [showReturnConfirm, setShowReturnConfirm] = useState(false);
-  const [returnTargetId, setReturnTargetId] = useState<string | null>(null);
+  const [returnTargetId, setReturnTargetId] = useState(null);
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotSuccess, setForgotSuccess] = useState(false);
   const [loginError, setLoginError] = useState('');
@@ -89,7 +56,7 @@ export default function App() {
   const [inventoryFormData, setInventoryFormData] = useState({
     name: '',
     totalQuantity: 0,
-    condition: 'Good' as const
+    condition: 'Good'
   });
 
   const [loginForm, setLoginForm] = useState({
@@ -145,7 +112,7 @@ export default function App() {
 
   // Remove localStorage sync effects
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     try {
       const response = await fetch('/api/auth/login', {
@@ -175,7 +142,7 @@ export default function App() {
     setCurrentPage('home');
   };
 
-  const navigateToSection = (sectionId: string) => {
+  const navigateToSection = (sectionId) => {
     if (currentPage !== 'home') {
       setCurrentPage('home');
       setTimeout(() => {
@@ -189,12 +156,12 @@ export default function App() {
     setIsMenuOpen(false);
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     // Roll number validation for CITK (12 digits)
@@ -240,7 +207,7 @@ export default function App() {
     }
   };
 
-  const handleInventorySubmit = async (e: React.FormEvent) => {
+  const handleInventorySubmit = async (e) => {
     e.preventDefault();
     if (!isAdmin) return;
 
@@ -282,7 +249,7 @@ export default function App() {
     }
   };
 
-  const deleteInventoryItem = async (id: string) => {
+  const deleteInventoryItem = async (id) => {
     if (!isAdmin) return;
     try {
       const response = await fetch(`/api/inventory/${id}`, { method: 'DELETE' });
@@ -294,7 +261,7 @@ export default function App() {
     }
   };
 
-  const markAsReturned = async (id: string) => {
+  const markAsReturned = async (id) => {
     if (!isAdmin) {
       alert("Unauthorized: Only admin can perform this action.");
       return;
@@ -318,7 +285,7 @@ export default function App() {
     }
   };
 
-  const handleRequestSubmit = async (e: React.FormEvent) => {
+  const handleRequestSubmit = async (e) => {
     e.preventDefault();
     
     // Simple validation
@@ -357,7 +324,7 @@ export default function App() {
     }
   };
 
-  const approveRequest = async (requestId: string) => {
+  const approveRequest = async (requestId) => {
     const request = requests.find(r => r.id === requestId);
     if (!request) return;
 
@@ -426,7 +393,7 @@ export default function App() {
     }
   };
 
-  const rejectRequest = async (requestId: string) => {
+  const rejectRequest = async (requestId) => {
     try {
       const response = await fetch(`/api/requests/${requestId}/reject`, { method: 'PUT' });
       if (response.ok) {
@@ -466,7 +433,7 @@ export default function App() {
     downloadCSV(headers, data, 'CITK_Sports_Inventory');
   };
 
-  const downloadCSV = (headers: string[], data: any[][], filename: string) => {
+  const downloadCSV = (headers, data, filename) => {
     const csvContent = [
       headers.join(','),
       ...data.map(row => row.map(val => `"${val}"`).join(','))
@@ -486,7 +453,7 @@ export default function App() {
     const today = new Date().toISOString().split('T')[0];
     return records.map(rec => {
       if (rec.status !== 'Returned') {
-        return { ...rec, status: today > rec.expectedReturnDate ? 'Overdue' : 'Active' } as SportsRecord;
+        return { ...rec, status: today > rec.expectedReturnDate ? 'Overdue' : 'Active' };
       }
       return rec;
     });
@@ -497,7 +464,7 @@ export default function App() {
     const overdueCount = processedRecords.filter(r => r.status === 'Overdue').length;
     const lowStockCount = inventory.filter(i => i.availableQuantity < 2).length;
     
-    const itemCounts: Record<string, number> = {};
+    const itemCounts = {};
     records.forEach(r => {
       itemCounts[r.itemName] = (itemCounts[r.itemName] || 0) + 1;
     });
@@ -918,7 +885,7 @@ export default function App() {
                 
                 {studentRecords.length > 0 ? (
                   <div className="space-y-4">
-                    {studentRecords.map((item: any) => (
+                    {studentRecords.map((item) => (
                       <div key={item.id} className={`bg-white p-4 border-l-4 ${item.type === 'record' ? 'border-[#4a9c64]' : 'border-yellow-500'} shadow-sm flex justify-between items-center`}>
                         <div>
                           <p className="font-bold text-gray-800">{item.itemName} {item.type === 'request' && <span className="text-[10px] bg-yellow-100 text-yellow-700 px-1 rounded ml-1 uppercase">Request</span>}</p>
@@ -1340,7 +1307,7 @@ export default function App() {
                         <label className="block text-xs font-bold mb-1 uppercase">Condition</label>
                         <select 
                           value={inventoryFormData.condition}
-                          onChange={(e) => setInventoryFormData(prev => ({ ...prev, condition: e.target.value as any }))}
+                          onChange={(e) => setInventoryFormData(prev => ({ ...prev, condition: e.target.value }))}
                           className="w-full border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-[#4a9c64]"
                         >
                           <option value="Good">Good</option>

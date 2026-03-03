@@ -47,13 +47,13 @@ db.exec(`
 `);
 
 // Seed initial data if empty
-const userCount = db.prepare('SELECT count(*) as count FROM users').get() as { count: number };
+const userCount = db.prepare('SELECT count(*) as count FROM users').get();
 if (userCount.count === 0) {
   const insertUser = db.prepare('INSERT INTO users (username, password, role) VALUES (?, ?, ?)');
   insertUser.run('admin', 'admin', 'admin'); // Default admin
 }
 
-const inventoryCount = db.prepare('SELECT count(*) as count FROM inventory').get() as { count: number };
+const inventoryCount = db.prepare('SELECT count(*) as count FROM inventory').get();
 if (inventoryCount.count === 0) {
   const insertItem = db.prepare('INSERT INTO inventory (name, totalQuantity, availableQuantity, condition) VALUES (?, ?, ?, ?)');
   insertItem.run('Football', 10, 8, 'Good');

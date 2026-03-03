@@ -1,5 +1,5 @@
 import express from 'express';
-import db from '../db';
+import db from '../db.js';
 
 const router = express.Router();
 
@@ -9,8 +9,7 @@ router.post('/login', (req, res) => {
   const user = db.prepare('SELECT * FROM users WHERE username = ? AND password = ?').get(username, password);
   
   if (user) {
-    const u = user as any;
-    res.json({ success: true, user: { username: u.username, role: u.role } });
+    res.json({ success: true, user: { username: user.username, role: user.role } });
   } else {
     res.status(401).json({ success: false, message: 'Invalid credentials' });
   }

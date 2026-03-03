@@ -5,10 +5,10 @@ import { fileURLToPath } from 'url';
 import { createServer as createViteServer } from 'vite';
 
 // Import routes
-import inventoryRoutes from './routes/inventory';
-import requestRoutes from './routes/requests';
-import recordRoutes from './routes/records';
-import authRoutes from './routes/auth';
+import inventoryRoutes from './routes/inventory.js';
+import requestRoutes from './routes/requests.js';
+import recordRoutes from './routes/records.js';
+import authRoutes from './routes/auth.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 

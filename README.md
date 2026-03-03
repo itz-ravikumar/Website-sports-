@@ -1,37 +1,76 @@
 # CITK Sports Management System
 
-A comprehensive web application designed to streamline the management of sports equipment inventory and student requests for the Central Institute of Technology Kokrajhar (CITK).
+A comprehensive full-stack web application designed to streamline the management of sports equipment inventory, student requests, and issuance records for the Central Institute of Technology Kokrajhar (CITK).
 
 ## Overview
 
-The CITK Sports Management System serves as a digital platform for the sports department to manage inventory, track equipment issuance, and handle student requests efficiently. It provides a user-friendly interface for both students and administrators.
+The CITK Sports Management System digitizes the sports department's operations, replacing manual logs with an efficient, database-backed solution. It serves two primary user groups:
+1.  **Students**: Can view available equipment, submit requests, and check their loan status.
+2.  **Administrators (Sports Incharge)**: Can manage inventory, approve/reject requests, issue items, track returns, and view analytics.
 
 ## Features
 
-### For Students
-*   **Browse Inventory:** View available sports equipment and their current stock status.
-*   **Submit Requests:** Request sports items online by providing basic details (Name, Roll No, Branch, etc.).
-*   **Check Status:** Track the status of requests and view currently issued items by entering the Roll Number.
+### 🎓 For Students
+*   **Digital Inventory:** Browse available sports equipment and check real-time stock status.
+*   **Online Requests:** Submit requests for sports items by providing details like Name, Roll No, and Branch.
+*   **Status Tracking:** Check the status of pending requests and view currently issued items by entering a Roll Number.
+*   **Campus Info:** Access information about CITK sports facilities and institutional details.
 
-### For Administrators (Sports Incharge)
-*   **Dashboard Analytics:** Get a quick overview of key metrics like Active Loans, Overdue Items, Low Stock alerts, and Most Popular items.
-*   **Request Management:** Review pending requests from students with options to Approve or Reject them.
-*   **Issue System:** A dedicated form to issue items to students, recording comprehensive details including expected return dates.
-*   **Record Tracking:** View a complete history of all transactions. Filter records, check status (Active, Overdue, Returned), and mark items as returned.
-*   **Inventory Management:** Add new equipment to the inventory, monitor stock levels, and remove items as needed.
-*   **Data Export:** Export issue records and inventory lists to CSV format for offline record-keeping.
+### 🛡️ For Administrators
+*   **Dashboard Analytics:** Real-time overview of Active Loans, Overdue Items, Low Stock alerts, and Popular Items.
+*   **Request Management:** Review pending student requests with options to Approve (auto-issues item) or Reject.
+*   **Issue & Return System:** 
+    *   Issue items directly to students with expected return dates.
+    *   Mark items as returned to update inventory automatically.
+*   **Inventory Control:** Add new equipment, update stock levels, and remove obsolete items.
+*   **Data Export:** Download comprehensive CSV reports for Inventory and Issue Records.
+*   **Secure Access:** Admin-protected routes and actions.
 
 ## Tech Stack
 
-*   **Frontend Framework:** React (with TypeScript)
-*   **Styling:** Tailwind CSS
+### Frontend
+*   **Languages:** HTML, CSS, JavaScript
+*   **Library:** React (Minimal usage)
+*   **Styling:** Tailwind v4 (Custom CITK Theme)
 *   **Icons:** Lucide React
-*   **Build Tool:** Vite
+*   **Animations:** Motion
+
+### Backend
+*   **Runtime:** Node.js
+*   **Server:** Express v4
+*   **Database:** SQLite (via `better-sqlite3`)
+*   **API:** RESTful JSON API
+
+## Project Structure
+
+```text
+/
+├── server/                 # Backend Logic
+│   ├── db.js               # Database connection & schema initialization
+│   ├── server.js           # Express application entry point
+│   └── routes/             # API route definitions
+├── src/                    # Frontend Logic
+│   ├── App.jsx             # Main React application component
+│   ├── index.css           # Global styles & Tailwind configuration
+│   └── main.jsx            # React entry point
+├── sports.db               # SQLite database file (auto-created)
+├── package.json            # Dependencies & scripts
+└── vite.config.js          # Build configuration
+```
+
+## Database Schema
+
+The application uses a local SQLite database (`sports.db`) with the following tables:
+
+1.  **`inventory`**: Tracks equipment stock (`id`, `name`, `totalQuantity`, `availableQuantity`, `condition`).
+2.  **`requests`**: Manages student requests (`studentName`, `rollNumber`, `branch`, `program`, `itemName`, `status`).
+3.  **`records`**: Logs active and historical loans (`studentName`, `rollNumber`, `issueDate`, `expectedReturnDate`, `status`).
+4.  **`users`**: Handles admin authentication (`username`, `password`, `role`).
 
 ## Getting Started
 
 ### Prerequisites
-*   Node.js (v16 or higher)
+*   Node.js (v18 or higher recommended)
 *   npm or yarn
 
 ### Installation
@@ -51,7 +90,7 @@ The CITK Sports Management System serves as a digital platform for the sports de
 
 ### Running the Application
 
-To start the development server:
+To start the development server (runs both Express backend and Vite frontend):
 
 ```bash
 npm run dev
@@ -68,15 +107,6 @@ npm run build
 ```
 
 The built files will be in the `dist` directory.
-
-## Project Structure
-
-*   `/src`: Source code
-    *   `App.tsx`: Main application component containing all logic and UI.
-    *   `main.tsx`: Entry point.
-    *   `index.css`: Global styles and Tailwind imports.
-*   `package.json`: Project dependencies and scripts.
-*   `vite.config.ts`: Vite configuration.
 
 ## License
 
