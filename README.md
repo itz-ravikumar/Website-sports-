@@ -60,13 +60,16 @@ This project is a React + Vite web application for managing sports item issue, r
 - `App.tsx`: main application logic and UI
 - `src/main.tsx`: React app bootstrap
 - `src/index.css`: styling
-- `src/index.html`: HTML entry file
+- `index.html`: HTML entry file
+- `src/types.ts`: shared TypeScript interfaces and unions
+- `src/constants.ts`: storage keys and shared constants
+- `src/utils/validation.ts`: roll number validation helpers
 - `vite.config.ts`: Vite configuration
 - `metadata.json`: app metadata
 
 ## Available Scripts
 
-- `npm run dev`: run development server (port `3000`)
+- `npm run dev`: run development server (port `3001`)
 - `npm run build`: create production build
 - `npm run preview`: preview production build locally
 - `npm run lint`: TypeScript type-check (`tsc --noEmit`)

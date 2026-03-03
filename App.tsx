@@ -19,40 +19,58 @@ import {
   ChevronRight,
   Download
 } from 'lucide-react';
+import { STORAGE_KEYS } from '@/constants';
+import type {
+  CurrentPage,
+  InventoryCondition,
+  InventoryFormData,
+  InventoryItem,
+  IssueFormData,
+  LoginFormData,
+  RequestFormData,
+  SportsRecord,
+  SportsRequest,
+  StudentStatusItem,
+} from '@/types';
+import {
+  isValidRollNumber,
+  ROLL_NUMBER_ERROR_MESSAGE,
+  sanitizeRollNumberInput,
+} from '@/utils/validation';
 
-interface SportsRecord {
-  id: string;
-  studentName: string;
-  rollNumber: string;
-  branch: string;
-  program: string;
-  year: string;
-  itemName: string;
-  category: string;
-  issueDate: string;
-  expectedReturnDate: string;
-  status: 'Active' | 'Overdue' | 'Returned';
-}
+const getTodayIsoDate = (): string => new Date().toISOString().split('T')[0];
 
-interface InventoryItem {
-  id: string;
-  name: string;
-  totalQuantity: number;
-  availableQuantity: number;
-  condition: 'Good' | 'Damaged' | 'Needs Replacement';
-}
+const createDefaultIssueFormData = (): IssueFormData => ({
+  studentName: '',
+  rollNumber: '',
+  branch: 'CSE',
+  program: 'B.Tech',
+  year: '1st Year',
+  itemName: '',
+  category: 'Outdoor',
+  issueDate: getTodayIsoDate(),
+  expectedReturnDate: '',
+});
 
-interface SportsRequest {
-  id: string;
-  studentName: string;
-  rollNumber: string;
-  branch: string;
-  program: string;
-  year: string;
-  itemName: string;
-  requestDate: string;
-  status: 'Pending' | 'Approved' | 'Rejected';
-}
+const createDefaultInventoryFormData = (): InventoryFormData => ({
+  name: '',
+  totalQuantity: 0,
+  condition: 'Good',
+});
+
+const createDefaultLoginFormData = (): LoginFormData => ({
+  username: '',
+  password: '',
+});
+
+const createDefaultRequestFormData = (): RequestFormData => ({
+  studentName: '',
+  rollNumber: '',
+  branch: 'CSE',
+  program: 'B.Tech',
+  year: '1st Year',
+  itemName: '',
+});
 
 export default function App() {
   const [records, setRecords] = useState<SportsRecord[]>([]);
@@ -63,7 +81,7 @@ export default function App() {
   const [showStatusResult, setShowStatusResult] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [currentPage, setCurrentPage] = useState<'home' | 'inventory'>('home');
+  const [currentPage, setCurrentPage] = useState<CurrentPage>('home');
   const [showLogin, setShowLogin] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [showForgot, setShowForgot] = useState(false);
@@ -72,72 +90,43 @@ export default function App() {
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotSuccess, setForgotSuccess] = useState(false);
   const [loginError, setLoginError] = useState('');
+  const [appError, setAppError] = useState('');
   
   // Form State
-  const [formData, setFormData] = useState({
-    studentName: '',
-    rollNumber: '',
-    branch: 'CSE',
-    program: 'B.Tech',
-    year: '1st Year',
-    itemName: '',
-    category: 'Outdoor',
-    issueDate: new Date().toISOString().split('T')[0],
-    expectedReturnDate: ''
-  });
+  const [formData, setFormData] = useState<IssueFormData>(createDefaultIssueFormData);
+  const [inventoryFormData, setInventoryFormData] = useState<InventoryFormData>(createDefaultInventoryFormData);
+  const [loginForm, setLoginForm] = useState<LoginFormData>(createDefaultLoginFormData);
+  const [requestFormData, setRequestFormData] = useState<RequestFormData>(createDefaultRequestFormData);
 
-  const [inventoryFormData, setInventoryFormData] = useState({
-    name: '',
-    totalQuantity: 0,
-    condition: 'Good' as const
-  });
-
-  const [loginForm, setLoginForm] = useState({
-    username: '',
-    password: ''
-  });
-
-  const [requestFormData, setRequestFormData] = useState({
-    studentName: '',
-    rollNumber: '',
-    branch: 'CSE',
-    program: 'B.Tech',
-    year: '1st Year',
-    itemName: ''
-  });
+  const showOperationError = (message: string, error: unknown): void => {
+    console.error(message, error);
+    setAppError(message);
+  };
 
   // Load records and admin state from LocalStorage
   useEffect(() => {
-    const savedRecords = localStorage.getItem('citk_sports_records');
-    if (savedRecords) {
-      try {
-        setRecords(JSON.parse(savedRecords));
-      } catch (e) {
-        console.error("Failed to parse records", e);
+    try {
+      const savedRecords = localStorage.getItem(STORAGE_KEYS.records);
+      if (savedRecords) {
+        setRecords(JSON.parse(savedRecords) as SportsRecord[]);
       }
-    }
 
-    const savedInventory = localStorage.getItem('citk_sports_inventory');
-    if (savedInventory) {
-      try {
-        setInventory(JSON.parse(savedInventory));
-      } catch (e) {
-        console.error("Failed to parse inventory", e);
+      const savedInventory = localStorage.getItem(STORAGE_KEYS.inventory);
+      if (savedInventory) {
+        setInventory(JSON.parse(savedInventory) as InventoryItem[]);
       }
-    }
 
-    const savedAdmin = localStorage.getItem('citk_is_admin');
-    if (savedAdmin === 'true') {
-      setIsAdmin(true);
-    }
-
-    const savedRequests = localStorage.getItem('citk_sports_requests');
-    if (savedRequests) {
-      try {
-        setRequests(JSON.parse(savedRequests));
-      } catch (e) {
-        console.error("Failed to parse requests", e);
+      const savedAdmin = localStorage.getItem(STORAGE_KEYS.isAdmin);
+      if (savedAdmin === 'true') {
+        setIsAdmin(true);
       }
+
+      const savedRequests = localStorage.getItem(STORAGE_KEYS.requests);
+      if (savedRequests) {
+        setRequests(JSON.parse(savedRequests) as SportsRequest[]);
+      }
+    } catch (error) {
+      showOperationError('Failed to load saved app data from local storage.', error);
     }
 
     // Check for #admin hash to open login modal
@@ -154,36 +143,58 @@ export default function App() {
 
   // Save records to LocalStorage
   useEffect(() => {
-    localStorage.setItem('citk_sports_records', JSON.stringify(records));
+    try {
+      localStorage.setItem(STORAGE_KEYS.records, JSON.stringify(records));
+    } catch (error) {
+      showOperationError('Failed to save issue records to local storage.', error);
+    }
   }, [records]);
 
   // Save inventory to LocalStorage
   useEffect(() => {
-    localStorage.setItem('citk_sports_inventory', JSON.stringify(inventory));
+    try {
+      localStorage.setItem(STORAGE_KEYS.inventory, JSON.stringify(inventory));
+    } catch (error) {
+      showOperationError('Failed to save inventory data to local storage.', error);
+    }
   }, [inventory]);
 
   // Save requests to LocalStorage
   useEffect(() => {
-    localStorage.setItem('citk_sports_requests', JSON.stringify(requests));
+    try {
+      localStorage.setItem(STORAGE_KEYS.requests, JSON.stringify(requests));
+    } catch (error) {
+      showOperationError('Failed to save request data to local storage.', error);
+    }
   }, [requests]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (loginForm.username === 'admin' && loginForm.password === 'admin') {
-      setIsAdmin(true);
-      localStorage.setItem('citk_is_admin', 'true');
-      setShowLogin(false);
-      setLoginError('');
-      setLoginForm({ username: '', password: '' });
-    } else {
-      setLoginError('Invalid credentials. Please try again.');
+    try {
+      if (loginForm.username === 'admin' && loginForm.password === 'admin') {
+        setIsAdmin(true);
+        localStorage.setItem(STORAGE_KEYS.isAdmin, 'true');
+        setShowLogin(false);
+        setLoginError('');
+        setAppError('');
+        setLoginForm(createDefaultLoginFormData());
+      } else {
+        setLoginError('Invalid credentials. Please try again.');
+      }
+    } catch (error) {
+      showOperationError('Failed to complete login. Please try again.', error);
+      setLoginError('Login failed due to a local storage error.');
     }
   };
 
   const handleLogout = () => {
-    setIsAdmin(false);
-    localStorage.removeItem('citk_is_admin');
-    setCurrentPage('home');
+    try {
+      setIsAdmin(false);
+      localStorage.removeItem(STORAGE_KEYS.isAdmin);
+      setCurrentPage('home');
+    } catch (error) {
+      showOperationError('Failed to logout cleanly. Please refresh the page.', error);
+    }
   };
 
   const navigateToSection = (sectionId: string) => {
@@ -202,60 +213,59 @@ export default function App() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name === 'rollNumber' ? sanitizeRollNumberInput(value) : value,
+    }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Roll number validation for CITK (12 digits)
-    const rollRegex = /^\d{12}$/;
-    if (!rollRegex.test(formData.rollNumber)) {
-      alert("Invalid Roll Number! CITK Roll Numbers must be 12 digits (e.g., 202401021002).");
-      return;
+
+    try {
+      const rollNumber = sanitizeRollNumberInput(formData.rollNumber);
+      if (!isValidRollNumber(rollNumber)) {
+        alert(ROLL_NUMBER_ERROR_MESSAGE);
+        return;
+      }
+
+      // verify inventory item and availability
+      const inventoryItem = inventory.find((i) => i.name === formData.itemName);
+      if (!inventoryItem) {
+        alert('Cannot issue: item not found in inventory.');
+        return;
+      }
+      if (inventoryItem.availableQuantity <= 0) {
+        alert('Cannot issue: item is out of stock.');
+        return;
+      }
+
+      const today = getTodayIsoDate();
+      const isOverdue = today > formData.expectedReturnDate;
+
+      const newRecord: SportsRecord = {
+        id: Date.now().toString(),
+        ...formData,
+        rollNumber,
+        status: isOverdue ? 'Overdue' : 'Active',
+      };
+
+      setRecords((prev) => [newRecord, ...prev]);
+
+      // decrement stock since item has been issued
+      setInventory((prev) =>
+        prev.map((i) => (i.id === inventoryItem.id ? { ...i, availableQuantity: i.availableQuantity - 1 } : i))
+      );
+
+      setFormData(createDefaultIssueFormData());
+      setAppError('');
+
+      // Scroll to records table
+      document.getElementById('issue-records')?.scrollIntoView({ behavior: 'smooth' });
+    } catch (error) {
+      showOperationError('Failed to issue the selected sports item.', error);
+      alert('Failed to issue item. Please try again.');
     }
-
-    // verify inventory item and availability
-    const inventoryItem = inventory.find(i => i.name === formData.itemName);
-    if (!inventoryItem) {
-      alert('Cannot issue: item not found in inventory.');
-      return;
-    }
-    if (inventoryItem.availableQuantity <= 0) {
-      alert('Cannot issue: item is out of stock.');
-      return;
-    }
-
-    const today = new Date().toISOString().split('T')[0];
-    const isOverdue = today > formData.expectedReturnDate;
-    
-    const newRecord: SportsRecord = {
-      id: Date.now().toString(),
-      ...formData,
-      status: isOverdue ? 'Overdue' : 'Active'
-    };
-
-    setRecords(prev => [newRecord, ...prev]);
-
-    // decrement stock since item has been issued
-    setInventory(prev => prev.map(i => 
-      i.id === inventoryItem.id ? { ...i, availableQuantity: i.availableQuantity - 1 } : i
-    ));
-
-    setFormData({
-      studentName: '',
-      rollNumber: '',
-      branch: 'CSE',
-      program: 'B.Tech',
-      year: '1st Year',
-      itemName: '',
-      category: 'Outdoor',
-      issueDate: new Date().toISOString().split('T')[0],
-      expectedReturnDate: ''
-    });
-    
-    // Scroll to records table
-    document.getElementById('issue-records')?.scrollIntoView({ behavior: 'smooth' });
   };
 
   const handleInventorySubmit = (e: React.FormEvent) => {
@@ -272,25 +282,32 @@ export default function App() {
       return;
     }
 
-    const newItem: InventoryItem = {
-      id: Date.now().toString(),
-      name: inventoryFormData.name,
-      totalQuantity: inventoryFormData.totalQuantity,
-      availableQuantity: inventoryFormData.totalQuantity,
-      condition: inventoryFormData.condition
-    };
+    try {
+      const newItem: InventoryItem = {
+        id: Date.now().toString(),
+        name: inventoryFormData.name,
+        totalQuantity: inventoryFormData.totalQuantity,
+        availableQuantity: inventoryFormData.totalQuantity,
+        condition: inventoryFormData.condition,
+      };
 
-    setInventory(prev => [newItem, ...prev]);
-    setInventoryFormData({
-      name: '',
-      totalQuantity: 0,
-      condition: 'Good'
-    });
+      setInventory((prev) => [newItem, ...prev]);
+      setInventoryFormData(createDefaultInventoryFormData());
+      setAppError('');
+    } catch (error) {
+      showOperationError('Failed to add inventory item.', error);
+      alert('Could not add inventory item. Please retry.');
+    }
   };
 
   const deleteInventoryItem = (id: string) => {
     if (!isAdmin) return;
-    setInventory(prev => prev.filter(item => item.id !== id));
+    try {
+      setInventory((prev) => prev.filter((item) => item.id !== id));
+    } catch (error) {
+      showOperationError('Failed to remove inventory item.', error);
+      alert('Could not remove inventory item. Please retry.');
+    }
   };
 
   const markAsReturned = (id: string) => {
@@ -298,147 +315,195 @@ export default function App() {
       alert("Unauthorized: Only admin can perform this action.");
       return;
     }
-    // update record status
-    const targetRecord = records.find(r => r.id === id);
-    if (targetRecord && targetRecord.status !== 'Returned') {
-      setRecords(prev => prev.map(rec => 
-        rec.id === id ? { ...rec, status: 'Returned' } : rec
-      ));
+    try {
+      // update record status
+      const targetRecord = records.find((r) => r.id === id);
+      if (targetRecord && targetRecord.status !== 'Returned') {
+        setRecords((prev) => prev.map((rec) => (rec.id === id ? { ...rec, status: 'Returned' } : rec)));
 
-      // restore inventory for the returned item
-      setInventory(prev => prev.map(i => 
-        i.name === targetRecord.itemName ? { ...i, availableQuantity: i.availableQuantity + 1 } : i
-      ));
+        // restore inventory for the returned item
+        setInventory((prev) =>
+          prev.map((i) =>
+            i.name === targetRecord.itemName ? { ...i, availableQuantity: i.availableQuantity + 1 } : i
+          )
+        );
+      }
+
+      setShowReturnConfirm(false);
+      setReturnTargetId(null);
+    } catch (error) {
+      showOperationError('Failed to mark item as returned.', error);
+      alert('Return action failed. Please retry.');
     }
-
-    setShowReturnConfirm(false);
-    setReturnTargetId(null);
   };
 
   const handleRequestSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Simple validation
-    if (!requestFormData.studentName || !requestFormData.rollNumber || !requestFormData.itemName) {
-      alert('Please fill in all required fields.');
-      return;
-    }
 
-    const newRequest: SportsRequest = {
-      ...requestFormData,
-      id: Math.random().toString(36).substr(2, 9),
-      requestDate: new Date().toISOString().split('T')[0],
-      status: 'Pending'
-    };
-    setRequests(prev => [newRequest, ...prev]);
-    setRequestFormData({
-      studentName: '',
-      rollNumber: '',
-      branch: 'CSE',
-      program: 'B.Tech',
-      year: '1st Year',
-      itemName: ''
-    });
-    alert('Request submitted successfully! Please wait for admin approval.');
+    try {
+      // Simple validation
+      if (!requestFormData.studentName || !requestFormData.rollNumber || !requestFormData.itemName) {
+        alert('Please fill in all required fields.');
+        return;
+      }
+
+      const rollNumber = sanitizeRollNumberInput(requestFormData.rollNumber);
+      if (!isValidRollNumber(rollNumber)) {
+        alert(ROLL_NUMBER_ERROR_MESSAGE);
+        return;
+      }
+
+      const newRequest: SportsRequest = {
+        ...requestFormData,
+        rollNumber,
+        id: Math.random().toString(36).substr(2, 9),
+        requestDate: getTodayIsoDate(),
+        status: 'Pending',
+      };
+
+      setRequests((prev) => [newRequest, ...prev]);
+      setRequestFormData(createDefaultRequestFormData());
+      setAppError('');
+      alert('Request submitted successfully! Please wait for admin approval.');
+    } catch (error) {
+      showOperationError('Failed to submit sports request.', error);
+      alert('Request submission failed. Please try again.');
+    }
   };
 
   const approveRequest = (requestId: string) => {
-    const request = requests.find(r => r.id === requestId);
-    if (!request) return;
+    try {
+      const request = requests.find((r) => r.id === requestId);
+      if (!request) return;
 
-    const item = inventory.find(i => i.name === request.itemName);
-    if (!item) {
-      alert('Item not found in inventory.');
-      return;
+      if (!isValidRollNumber(request.rollNumber)) {
+        alert(ROLL_NUMBER_ERROR_MESSAGE);
+        return;
+      }
+
+      const item = inventory.find((i) => i.name === request.itemName);
+      if (!item) {
+        alert('Item not found in inventory.');
+        return;
+      }
+
+      if (item.availableQuantity <= 0) {
+        alert('Item not available in stock.');
+        return;
+      }
+
+      // Create record
+      const newRecord: SportsRecord = {
+        id: Math.random().toString(36).substr(2, 9),
+        studentName: request.studentName,
+        rollNumber: request.rollNumber,
+        branch: request.branch,
+        program: request.program,
+        year: request.year,
+        itemName: request.itemName,
+        category: 'Outdoor', // Default
+        issueDate: getTodayIsoDate(),
+        expectedReturnDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 7 days default
+        status: 'Active',
+      };
+
+      setRecords((prev) => [newRecord, ...prev]);
+
+      // Update inventory
+      setInventory((prev) =>
+        prev.map((i) => (i.name === request.itemName ? { ...i, availableQuantity: i.availableQuantity - 1 } : i))
+      );
+
+      // Update request status
+      setRequests((prev) => prev.map((r) => (r.id === requestId ? { ...r, status: 'Approved' } : r)));
+
+      setAppError('');
+      alert('Request approved and item issued.');
+    } catch (error) {
+      showOperationError('Failed to approve request.', error);
+      alert('Request approval failed. Please retry.');
     }
-    
-    if (item.availableQuantity <= 0) {
-      alert('Item not available in stock.');
-      return;
-    }
-
-    // Create record
-    const newRecord: SportsRecord = {
-      id: Math.random().toString(36).substr(2, 9),
-      studentName: request.studentName,
-      rollNumber: request.rollNumber,
-      branch: request.branch,
-      program: request.program,
-      year: request.year,
-      itemName: request.itemName,
-      category: 'Outdoor', // Default
-      issueDate: new Date().toISOString().split('T')[0],
-      expectedReturnDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 7 days default
-      status: 'Active'
-    };
-
-    setRecords(prev => [newRecord, ...prev]);
-    
-    // Update inventory
-    setInventory(prev => prev.map(i => 
-      i.name === request.itemName ? { ...i, availableQuantity: i.availableQuantity - 1 } : i
-    ));
-
-    // Update request status
-    setRequests(prev => prev.map(r => 
-      r.id === requestId ? { ...r, status: 'Approved' } : r
-    ));
-    
-    alert('Request approved and item issued.');
   };
 
   const rejectRequest = (requestId: string) => {
-    setRequests(prev => prev.map(r => 
-      r.id === requestId ? { ...r, status: 'Rejected' } : r
-    ));
+    try {
+      setRequests((prev) => prev.map((r) => (r.id === requestId ? { ...r, status: 'Rejected' } : r)));
+    } catch (error) {
+      showOperationError('Failed to reject request.', error);
+      alert('Request rejection failed. Please retry.');
+    }
   };
 
   const exportRecordsCSV = () => {
-    const headers = ['Roll Number', 'Student Name', 'Branch', 'Program', 'Year', 'Item Name', 'Issue Date', 'Expected Return', 'Status'];
-    const data = records.map(r => [
-      r.rollNumber,
-      r.studentName,
-      r.branch,
-      r.program,
-      r.year,
-      r.itemName,
-      r.issueDate,
-      r.expectedReturnDate,
-      r.status
-    ]);
-    downloadCSV(headers, data, 'CITK_Sports_Issue_Records');
+    try {
+      const headers = ['Roll Number', 'Student Name', 'Branch', 'Program', 'Year', 'Item Name', 'Issue Date', 'Expected Return', 'Status'];
+      const data = records.map((r) => [
+        r.rollNumber,
+        r.studentName,
+        r.branch,
+        r.program,
+        r.year,
+        r.itemName,
+        r.issueDate,
+        r.expectedReturnDate,
+        r.status,
+      ]);
+      downloadCSV(headers, data, 'CITK_Sports_Issue_Records');
+    } catch (error) {
+      showOperationError('Failed to export issue records CSV.', error);
+      alert('Issue records export failed. Please retry.');
+    }
   };
 
   const exportInventoryCSV = () => {
-    const headers = ['Item Name', 'Total Quantity', 'Available Quantity', 'Condition'];
-    const data = inventory.map(i => [
-      i.name,
-      i.totalQuantity,
-      i.availableQuantity,
-      i.condition
-    ]);
-    downloadCSV(headers, data, 'CITK_Sports_Inventory');
+    try {
+      const headers = ['Item Name', 'Total Quantity', 'Available Quantity', 'Condition'];
+      const data = inventory.map((i) => [
+        i.name,
+        i.totalQuantity,
+        i.availableQuantity,
+        i.condition,
+      ]);
+      downloadCSV(headers, data, 'CITK_Sports_Inventory');
+    } catch (error) {
+      showOperationError('Failed to export inventory CSV.', error);
+      alert('Inventory export failed. Please retry.');
+    }
   };
 
-  const downloadCSV = (headers: string[], data: any[][], filename: string) => {
-    const csvContent = [
-      headers.join(','),
-      ...data.map(row => row.map(val => `"${val}"`).join(','))
-    ].join('\n');
-    
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `${filename}_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const downloadCSV = (headers: string[], data: Array<Array<string | number>>, filename: string) => {
+    let url = '';
+    let link: HTMLAnchorElement | null = null;
+    try {
+      const csvContent = [
+        headers.join(','),
+        ...data.map((row) => row.map((val) => `"${String(val).replace(/"/g, '""')}"`).join(',')),
+      ].join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      url = URL.createObjectURL(blob);
+      link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `${filename}_${getTodayIsoDate()}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      setAppError('');
+    } catch (error) {
+      showOperationError('CSV download failed. Please try again.', error);
+      alert('CSV export failed. Please try again.');
+    } finally {
+      if (link && document.body.contains(link)) {
+        document.body.removeChild(link);
+      }
+      if (url) {
+        URL.revokeObjectURL(url);
+      }
+    }
   };
 
   const processedRecords = useMemo(() => {
-    const today = new Date().toISOString().split('T')[0];
-    return records.map(rec => {
+    const today = getTodayIsoDate();
+    return records.map((rec) => {
       if (rec.status !== 'Returned') {
         return { ...rec, status: today > rec.expectedReturnDate ? 'Overdue' : 'Active' } as SportsRecord;
       }
@@ -474,12 +539,27 @@ export default function App() {
     );
   }, [processedRecords, searchQuery]);
 
-  const studentRecords = useMemo(() => {
-    if (!studentStatusRoll) return [];
-    const studentRecs = processedRecords.filter(r => r.rollNumber === studentStatusRoll).map(r => ({ ...r, type: 'record' }));
-    const studentReqs = requests.filter(r => r.rollNumber === studentStatusRoll).map(r => ({ ...r, type: 'request' }));
+  const studentRecords = useMemo<StudentStatusItem[]>(() => {
+    if (!isValidRollNumber(studentStatusRoll)) return [];
+    const studentRecs = processedRecords
+      .filter((r) => r.rollNumber === studentStatusRoll)
+      .map((r) => ({ ...r, type: 'record' as const }));
+    const studentReqs = requests
+      .filter((r) => r.rollNumber === studentStatusRoll)
+      .map((r) => ({ ...r, type: 'request' as const }));
     return [...studentRecs, ...studentReqs];
   }, [processedRecords, requests, studentStatusRoll]);
+
+  const handleStatusSearch = () => {
+    const normalizedRoll = sanitizeRollNumberInput(studentStatusRoll);
+    setStudentStatusRoll(normalizedRoll);
+    if (!isValidRollNumber(normalizedRoll)) {
+      alert(ROLL_NUMBER_ERROR_MESSAGE);
+      setShowStatusResult(false);
+      return;
+    }
+    setShowStatusResult(true);
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -663,6 +743,11 @@ export default function App() {
       </nav>
 
       <main className="flex-grow">
+        {appError && (
+          <div className="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 text-sm">
+            {appError}
+          </div>
+        )}
         {currentPage === 'home' ? (
           <>
             {/* 3) HERO SECTION */}
@@ -773,7 +858,11 @@ export default function App() {
                     <input 
                       type="text" required
                       value={requestFormData.rollNumber}
-                      onChange={(e) => setRequestFormData(prev => ({ ...prev, rollNumber: e.target.value }))}
+                      inputMode="numeric"
+                      maxLength={12}
+                      pattern="[0-9]{12}"
+                      title={ROLL_NUMBER_ERROR_MESSAGE}
+                      onChange={(e) => setRequestFormData(prev => ({ ...prev, rollNumber: sanitizeRollNumberInput(e.target.value) }))}
                       className="w-full border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-[#4a9c64]"
                       placeholder="12-digit Roll No"
                     />
@@ -850,12 +939,16 @@ export default function App() {
               <input 
                 type="text" 
                 placeholder="e.g. 202401021002"
+                inputMode="numeric"
+                maxLength={12}
+                pattern="[0-9]{12}"
+                title={ROLL_NUMBER_ERROR_MESSAGE}
                 className="flex-grow border-2 border-gray-200 px-6 py-4 text-sm focus:outline-none focus:border-[#4a9c64] uppercase font-bold tracking-widest transition-all"
                 value={studentStatusRoll}
-                onChange={(e) => setStudentStatusRoll(e.target.value)}
+                onChange={(e) => setStudentStatusRoll(sanitizeRollNumberInput(e.target.value))}
               />
               <button 
-                onClick={() => setShowStatusResult(true)}
+                onClick={handleStatusSearch}
                 className="bg-[#4a9c64] text-white px-8 py-4 font-black uppercase tracking-widest hover:bg-[#3a7d50] transition-all shadow-md flex items-center justify-center gap-2"
               >
                 Search <Search size={18} />
@@ -871,7 +964,7 @@ export default function App() {
                 
                 {studentRecords.length > 0 ? (
                   <div className="space-y-4">
-                    {studentRecords.map((item: any) => (
+                    {studentRecords.map((item: StudentStatusItem) => (
                       <div key={item.id} className={`bg-white p-4 border-l-4 ${item.type === 'record' ? 'border-[#4a9c64]' : 'border-yellow-500'} shadow-sm flex justify-between items-center`}>
                         <div>
                           <p className="font-bold text-gray-800">{item.itemName} {item.type === 'request' && <span className="text-[10px] bg-yellow-100 text-yellow-700 px-1 rounded ml-1 uppercase">Request</span>}</p>
@@ -1019,6 +1112,10 @@ export default function App() {
                       <label className="block text-xs font-bold mb-1 uppercase">Roll Number</label>
                       <input 
                         type="text" name="rollNumber" required 
+                        inputMode="numeric"
+                        maxLength={12}
+                        pattern="[0-9]{12}"
+                        title={ROLL_NUMBER_ERROR_MESSAGE}
                         value={formData.rollNumber} onChange={handleInputChange}
                         className="w-full border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-[#4a9c64]" 
                         placeholder="e.g. 202401021002"
@@ -1263,7 +1360,9 @@ export default function App() {
                         <label className="block text-xs font-bold mb-1 uppercase">Condition</label>
                         <select 
                           value={inventoryFormData.condition}
-                          onChange={(e) => setInventoryFormData(prev => ({ ...prev, condition: e.target.value as any }))}
+                          onChange={(e) =>
+                            setInventoryFormData((prev) => ({ ...prev, condition: e.target.value as InventoryCondition }))
+                          }
                           className="w-full border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-[#4a9c64]"
                         >
                           <option value="Good">Good</option>
