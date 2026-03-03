@@ -106,38 +106,29 @@ export default function App() {
     itemName: ''
   });
 
-  // Load records and admin state from LocalStorage
+  // Load data from API
   useEffect(() => {
-    const savedRecords = localStorage.getItem('citk_sports_records');
-    if (savedRecords) {
+    const fetchData = async () => {
       try {
-        setRecords(JSON.parse(savedRecords));
-      } catch (e) {
-        console.error("Failed to parse records", e);
+        const [invRes, recRes, reqRes] = await Promise.all([
+          fetch('/api/inventory'),
+          fetch('/api/records'),
+          fetch('/api/requests')
+        ]);
+        
+        if (invRes.ok) setInventory(await invRes.json());
+        if (recRes.ok) setRecords(await recRes.json());
+        if (reqRes.ok) setRequests(await reqRes.json());
+      } catch (error) {
+        console.error("Failed to fetch data", error);
       }
-    }
+    };
 
-    const savedInventory = localStorage.getItem('citk_sports_inventory');
-    if (savedInventory) {
-      try {
-        setInventory(JSON.parse(savedInventory));
-      } catch (e) {
-        console.error("Failed to parse inventory", e);
-      }
-    }
+    fetchData();
 
     const savedAdmin = localStorage.getItem('citk_is_admin');
     if (savedAdmin === 'true') {
       setIsAdmin(true);
-    }
-
-    const savedRequests = localStorage.getItem('citk_sports_requests');
-    if (savedRequests) {
-      try {
-        setRequests(JSON.parse(savedRequests));
-      } catch (e) {
-        console.error("Failed to parse requests", e);
-      }
     }
 
     // Check for #admin hash to open login modal
@@ -152,31 +143,29 @@ export default function App() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Save records to LocalStorage
-  useEffect(() => {
-    localStorage.setItem('citk_sports_records', JSON.stringify(records));
-  }, [records]);
+  // Remove localStorage sync effects
 
-  // Save inventory to LocalStorage
-  useEffect(() => {
-    localStorage.setItem('citk_sports_inventory', JSON.stringify(inventory));
-  }, [inventory]);
-
-  // Save requests to LocalStorage
-  useEffect(() => {
-    localStorage.setItem('citk_sports_requests', JSON.stringify(requests));
-  }, [requests]);
-
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (loginForm.username === 'admin' && loginForm.password === 'admin') {
-      setIsAdmin(true);
-      localStorage.setItem('citk_is_admin', 'true');
-      setShowLogin(false);
-      setLoginError('');
-      setLoginForm({ username: '', password: '' });
-    } else {
-      setLoginError('Invalid credentials. Please try again.');
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(loginForm)
+      });
+      
+      const data = await response.json();
+      if (data.success) {
+        setIsAdmin(true);
+        localStorage.setItem('citk_is_admin', 'true');
+        setShowLogin(false);
+        setLoginError('');
+        setLoginForm({ username: '', password: '' });
+      } else {
+        setLoginError(data.message || 'Invalid credentials. Please try again.');
+      }
+    } catch (error) {
+      setLoginError('Login failed. Please try again later.');
     }
   };
 
@@ -205,7 +194,7 @@ export default function App() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Roll number validation for CITK (12 digits)
@@ -218,30 +207,40 @@ export default function App() {
     const today = new Date().toISOString().split('T')[0];
     const isOverdue = today > formData.expectedReturnDate;
     
-    const newRecord: SportsRecord = {
-      id: Date.now().toString(),
+    const newRecord = {
       ...formData,
       status: isOverdue ? 'Overdue' : 'Active'
     };
 
-    setRecords(prev => [newRecord, ...prev]);
-    setFormData({
-      studentName: '',
-      rollNumber: '',
-      branch: 'CSE',
-      program: 'B.Tech',
-      year: '1st Year',
-      itemName: '',
-      category: 'Outdoor',
-      issueDate: new Date().toISOString().split('T')[0],
-      expectedReturnDate: ''
-    });
-    
-    // Scroll to table
-    document.getElementById('tracking-system')?.scrollIntoView({ behavior: 'smooth' });
+    try {
+      const response = await fetch('/api/records', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newRecord)
+      });
+      
+      if (response.ok) {
+        const savedRecord = await response.json();
+        setRecords(prev => [savedRecord, ...prev]);
+        setFormData({
+          studentName: '',
+          rollNumber: '',
+          branch: 'CSE',
+          program: 'B.Tech',
+          year: '1st Year',
+          itemName: '',
+          category: 'Outdoor',
+          issueDate: new Date().toISOString().split('T')[0],
+          expectedReturnDate: ''
+        });
+        document.getElementById('tracking-system')?.scrollIntoView({ behavior: 'smooth' });
+      }
+    } catch (error) {
+      alert("Failed to save record.");
+    }
   };
 
-  const handleInventorySubmit = (e: React.FormEvent) => {
+  const handleInventorySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isAdmin) return;
 
@@ -255,40 +254,71 @@ export default function App() {
       return;
     }
 
-    const newItem: InventoryItem = {
-      id: Date.now().toString(),
+    const newItem = {
       name: inventoryFormData.name,
       totalQuantity: inventoryFormData.totalQuantity,
       availableQuantity: inventoryFormData.totalQuantity,
       condition: inventoryFormData.condition
     };
 
-    setInventory(prev => [newItem, ...prev]);
-    setInventoryFormData({
-      name: '',
-      totalQuantity: 0,
-      condition: 'Good'
-    });
+    try {
+      const response = await fetch('/api/inventory', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newItem)
+      });
+      
+      if (response.ok) {
+        const savedItem = await response.json();
+        setInventory(prev => [savedItem, ...prev]);
+        setInventoryFormData({
+          name: '',
+          totalQuantity: 0,
+          condition: 'Good'
+        });
+      }
+    } catch (error) {
+      alert("Failed to add inventory item.");
+    }
   };
 
-  const deleteInventoryItem = (id: string) => {
+  const deleteInventoryItem = async (id: string) => {
     if (!isAdmin) return;
-    setInventory(prev => prev.filter(item => item.id !== id));
+    try {
+      const response = await fetch(`/api/inventory/${id}`, { method: 'DELETE' });
+      if (response.ok) {
+        setInventory(prev => prev.filter(item => item.id !== id));
+      }
+    } catch (error) {
+      alert("Failed to delete item.");
+    }
   };
 
-  const markAsReturned = (id: string) => {
+  const markAsReturned = async (id: string) => {
     if (!isAdmin) {
       alert("Unauthorized: Only admin can perform this action.");
       return;
     }
-    setRecords(prev => prev.map(rec => 
-      rec.id === id ? { ...rec, status: 'Returned' } : rec
-    ));
-    setShowReturnConfirm(false);
-    setReturnTargetId(null);
+    try {
+      const response = await fetch(`/api/records/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'Returned' })
+      });
+      
+      if (response.ok) {
+        setRecords(prev => prev.map(rec => 
+          rec.id === id ? { ...rec, status: 'Returned' } : rec
+        ));
+        setShowReturnConfirm(false);
+        setReturnTargetId(null);
+      }
+    } catch (error) {
+      alert("Failed to update status.");
+    }
   };
 
-  const handleRequestSubmit = (e: React.FormEvent) => {
+  const handleRequestSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Simple validation
@@ -297,25 +327,37 @@ export default function App() {
       return;
     }
 
-    const newRequest: SportsRequest = {
+    const newRequest = {
       ...requestFormData,
-      id: Math.random().toString(36).substr(2, 9),
-      requestDate: new Date().toISOString().split('T')[0],
-      status: 'Pending'
+      requestDate: new Date().toISOString().split('T')[0]
     };
-    setRequests(prev => [newRequest, ...prev]);
-    setRequestFormData({
-      studentName: '',
-      rollNumber: '',
-      branch: 'CSE',
-      program: 'B.Tech',
-      year: '1st Year',
-      itemName: ''
-    });
-    alert('Request submitted successfully! Please wait for admin approval.');
+
+    try {
+      const response = await fetch('/api/requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newRequest)
+      });
+      
+      if (response.ok) {
+        const savedRequest = await response.json();
+        setRequests(prev => [savedRequest, ...prev]);
+        setRequestFormData({
+          studentName: '',
+          rollNumber: '',
+          branch: 'CSE',
+          program: 'B.Tech',
+          year: '1st Year',
+          itemName: ''
+        });
+        alert('Request submitted successfully! Please wait for admin approval.');
+      }
+    } catch (error) {
+      alert("Failed to submit request.");
+    }
   };
 
-  const approveRequest = (requestId: string) => {
+  const approveRequest = async (requestId: string) => {
     const request = requests.find(r => r.id === requestId);
     if (!request) return;
 
@@ -330,40 +372,71 @@ export default function App() {
       return;
     }
 
-    // Create record
-    const newRecord: SportsRecord = {
-      id: Math.random().toString(36).substr(2, 9),
-      studentName: request.studentName,
-      rollNumber: request.rollNumber,
-      branch: request.branch,
-      program: request.program,
-      year: request.year,
-      itemName: request.itemName,
-      category: 'Outdoor', // Default
-      issueDate: new Date().toISOString().split('T')[0],
-      expectedReturnDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 7 days default
-      status: 'Active'
-    };
+    try {
+      // Approve request
+      const approveRes = await fetch(`/api/requests/${requestId}/approve`, { method: 'PUT' });
+      if (!approveRes.ok) throw new Error("Failed to approve request");
 
-    setRecords(prev => [newRecord, ...prev]);
-    
-    // Update inventory
-    setInventory(prev => prev.map(i => 
-      i.name === request.itemName ? { ...i, availableQuantity: i.availableQuantity - 1 } : i
-    ));
+      // Create record
+      const newRecord = {
+        studentName: request.studentName,
+        rollNumber: request.rollNumber,
+        branch: request.branch,
+        program: request.program,
+        year: request.year,
+        itemName: request.itemName,
+        category: 'Outdoor', // Default
+        issueDate: new Date().toISOString().split('T')[0],
+        expectedReturnDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 7 days default
+        status: 'Active'
+      };
 
-    // Update request status
-    setRequests(prev => prev.map(r => 
-      r.id === requestId ? { ...r, status: 'Approved' } : r
-    ));
-    
-    alert('Request approved and item issued.');
+      const recordRes = await fetch('/api/records', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newRecord)
+      });
+      
+      if (recordRes.ok) {
+        const savedRecord = await recordRes.json();
+        setRecords(prev => [savedRecord, ...prev]);
+        
+        // Update inventory locally (or fetch again)
+        const updatedInvRes = await fetch(`/api/inventory/${item.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ availableQuantity: item.availableQuantity - 1 })
+        });
+
+        if (updatedInvRes.ok) {
+          setInventory(prev => prev.map(i => 
+            i.id === item.id ? { ...i, availableQuantity: i.availableQuantity - 1 } : i
+          ));
+        }
+
+        // Update request status locally
+        setRequests(prev => prev.map(r => 
+          r.id === requestId ? { ...r, status: 'Approved' } : r
+        ));
+        
+        alert('Request approved and item issued.');
+      }
+    } catch (error) {
+      alert("Failed to process approval.");
+    }
   };
 
-  const rejectRequest = (requestId: string) => {
-    setRequests(prev => prev.map(r => 
-      r.id === requestId ? { ...r, status: 'Rejected' } : r
-    ));
+  const rejectRequest = async (requestId: string) => {
+    try {
+      const response = await fetch(`/api/requests/${requestId}/reject`, { method: 'PUT' });
+      if (response.ok) {
+        setRequests(prev => prev.map(r => 
+          r.id === requestId ? { ...r, status: 'Rejected' } : r
+        ));
+      }
+    } catch (error) {
+      alert("Failed to reject request.");
+    }
   };
 
   const exportRecordsCSV = () => {
@@ -642,7 +715,7 @@ export default function App() {
         <section id="home" className="relative h-[450px] flex items-center justify-center overflow-hidden">
           <div className="absolute inset-0 z-0">
             <img 
-              src="https://ais-pre-ibyeudndoqkx7x4dkk3m6p-27581479864.asia-east1.run.app/api/images/53" 
+              src="https://images.unsplash.com/photo-1562774053-701939374585?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80" 
               alt="CITK Campus Building" 
               className="w-full h-full object-cover opacity-60"
               referrerPolicy="no-referrer"
@@ -656,22 +729,7 @@ export default function App() {
             <p className="text-xl text-white/90 mb-8 font-normal italic">
               Digitizing Campus Sports Equipment Management for Enhanced Efficiency
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a 
-                href="#sports-issue-system"
-                className="bg-[#4a9c64] text-white px-8 py-3 rounded-sm font-bold uppercase tracking-widest hover:bg-[#3a7d50] transition-all shadow-lg inline-flex items-center gap-2"
-              >
-                Access Issue System <ChevronRight size={18} />
-              </a>
-              {!isAdmin && (
-                <button 
-                  onClick={() => setShowLogin(true)}
-                  className="bg-white text-[#4a9c64] border-2 border-[#4a9c64] px-8 py-3 rounded-sm font-bold uppercase tracking-widest hover:bg-gray-50 transition-all shadow-lg"
-                >
-                  Admin Login
-                </button>
-              )}
-            </div>
+
           </div>
         </section>
 
@@ -698,7 +756,7 @@ export default function App() {
                 <div className="absolute -top-4 -left-4 w-24 h-24 bg-yellow-400 -z-10"></div>
                 <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-[#4a9c64] -z-10"></div>
                 <img 
-                  src="https://ais-pre-ibyeudndoqkx7x4dkk3m6p-27581479864.asia-east1.run.app/api/images/53" 
+                  src="https://images.unsplash.com/photo-1562774053-701939374585?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80" 
                   className="rounded-sm shadow-2xl w-full h-[400px] object-cover grayscale hover:grayscale-0 transition-all duration-700" 
                   alt="CITK Main Building" 
                   referrerPolicy="no-referrer" 
@@ -922,6 +980,36 @@ export default function App() {
                   <div className="bg-white border border-gray-100 p-6 shadow-sm hover:shadow-md transition-all">
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Most Popular</p>
                     <p className="text-xl font-black text-[#4a9c64] truncate tracking-tight">{analytics.mostPopular}</p>
+                  </div>
+                </div>
+
+                {/* RECENT ACTIVITY SECTION */}
+                <div className="bg-white border border-gray-200 shadow-sm p-6">
+                  <h3 className="text-lg font-bold text-gray-800 uppercase tracking-tight mb-4 flex items-center gap-2">
+                    <Clock size={20} className="text-[#4a9c64]" /> Recent Activity
+                  </h3>
+                  <div className="space-y-3">
+                    {records.slice(0, 5).map((rec) => (
+                      <div key={rec.id} className="flex items-center justify-between border-b border-gray-100 pb-2 last:border-0 last:pb-0">
+                        <div>
+                          <p className="text-sm font-bold text-gray-700">{rec.studentName} ({rec.rollNumber})</p>
+                          <p className="text-xs text-gray-500">Issued: {rec.itemName}</p>
+                        </div>
+                        <div className="text-right">
+                          <span className={`text-[10px] font-bold uppercase px-2 py-1 rounded-full ${
+                            rec.status === 'Active' ? 'bg-blue-100 text-blue-700' :
+                            rec.status === 'Overdue' ? 'bg-red-100 text-red-700' :
+                            'bg-green-100 text-green-700'
+                          }`}>
+                            {rec.status}
+                          </span>
+                          <p className="text-[10px] text-gray-400 mt-1">{rec.issueDate}</p>
+                        </div>
+                      </div>
+                    ))}
+                    {records.length === 0 && (
+                      <p className="text-sm text-gray-500 italic text-center">No recent activity found.</p>
+                    )}
                   </div>
                 </div>
 
