@@ -1,90 +1,146 @@
 # CITK Sports Management System
 
-This project is a React + Vite web application for managing sports item issue, return tracking, and inventory at Central Institute of Technology Kokrajhar (CITK).
+Web-based sports issue, return, and inventory tracker for Central Institute of Technology Kokrajhar (CITK).
 
-## Project Summary
+## Overview
 
-- Tracks issued sports items with student and return-date details
-- Supports admin workflows for issuing, returning, and inventory updates
-- Allows students to submit equipment requests and check their status
-- Stores records locally in the browser using LocalStorage
-- Exports records and inventory data as CSV files
+This application helps two groups work in one system:
 
-## Tool Stack
+- Students can request sports items and track their request/issue status using roll number.
+- Admin can manage inventory, approve or reject requests, issue items, mark returns, and export data.
 
-- Frontend: React 19
-- Build Tool: Vite 6
-- Language: TypeScript
-- Styling: Tailwind CSS 4
-- Icons: Lucide React
-- Motion/Animation: Motion
-- Data Persistence: Browser LocalStorage
+The app is a frontend-only project and stores all data in browser LocalStorage.
 
-## User Roles
+## Key Features
 
-- Student:
-  - Submit sports item requests
-  - Check request/issue status using roll number
-- Admin:
-  - Login to dashboard
-  - Approve/reject requests
-  - Add/remove inventory items
-  - Mark issued items as returned
-  - Export records and inventory as CSV
+- Student request submission flow
+- Student status lookup by roll number
+- Admin login flow (demo credentials)
+- Inventory add/remove with quantity tracking
+- Issue records with expected return date
+- Overdue/active/returned status management
+- CSV export for records and inventory
+- Local persistence across browser refreshes
 
-## Workflow
+## Tech Stack
 
-1. Student submits an item request.
-2. Admin reviews pending requests.
-3. On approval, the system creates an issue record and reduces available inventory.
-4. Student can track status by roll number.
-5. Admin marks return, and record status updates.
-
-## Data Model (LocalStorage)
-
-- `citk_sports_records`: issued/returned item records
-- `citk_sports_inventory`: available stock and condition
-- `citk_sports_requests`: student request queue (Pending/Approved/Rejected)
-- `citk_is_admin`: admin login session flag
-
-## Validation & Rules
-
-- Roll number must be exactly 12 digits.
-- Required fields are checked before submit.
-- Item approval is blocked when stock is unavailable.
-- Overdue status is calculated from expected return date.
-- Approved requests create records with a default 7-day return window.
+- React 19
+- TypeScript
+- Vite 6
+- Tailwind CSS 4
+- Lucide React (icons)
 
 ## Project Structure
 
-- `App.tsx`: main application logic and UI
-- `src/main.tsx`: React app bootstrap
-- `src/index.css`: styling
-- `index.html`: HTML entry file
-- `src/types.ts`: shared TypeScript interfaces and unions
-- `src/constants.ts`: storage keys and shared constants
-- `src/utils/validation.ts`: roll number validation helpers
-- `vite.config.ts`: Vite configuration
-- `metadata.json`: app metadata
+```
+.
+|- App.tsx
+|- index.html
+|- metadata.json
+|- package.json
+|- tsconfig.json
+|- vite.config.ts
+`- src/
+  |- constants.ts
+  |- index.css
+  |- main.tsx
+  |- types.ts
+  `- utils/
+    `- validation.ts
+```
 
-## Available Scripts
+## Local Data Storage
 
-- `npm run dev`: run development server (port `3001`)
-- `npm run build`: create production build
-- `npm run preview`: preview production build locally
-- `npm run lint`: TypeScript type-check (`tsc --noEmit`)
+The app uses these LocalStorage keys:
 
-## Known Limitations
+- `citk_sports_records` -> issue/return records
+- `citk_sports_inventory` -> inventory and available stock
+- `citk_sports_requests` -> pending/approved/rejected requests
+- `citk_is_admin` -> admin session state
 
-- Data is stored in browser storage only (no shared database).
-- Admin authentication is static/demo style (not production secure).
-- No server-side authorization or audit logging.
+## Validation Rules
 
-## Run Locally
+- Roll number must be exactly 12 digits
+- Roll number input is sanitized to digits only
+- Issue is blocked when item is unavailable
+- Inventory quantity must be a positive integer
+- Overdue state is computed from expected return date
 
-**Prerequisites:** Node.js
+## Scripts
 
-1. Install dependencies:
-   `npm install`
-2. Start development server:
-   `npm run dev`
+- `npm run dev` -> starts Vite dev server on port `3001`
+- `npm run build` -> creates production build
+- `npm run preview` -> previews production build
+- `npm run lint` -> TypeScript check (`tsc --noEmit`)
+- `npm run clean` -> removes `dist` folder
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- npm 9+
+
+### Install and Run
+
+```bash
+npm install
+npm run dev
+```
+
+Open the app in your browser using the URL shown in terminal output.
+
+### Build for Production
+
+```bash
+npm run build
+npm run preview
+```
+
+## Admin Access (Demo)
+
+- Username: `admin`
+- Password: `admin`
+
+This is for demo/testing only and is not production authentication.
+
+## Configuration Notes
+
+- Path alias `@` maps to `src/` (configured in `tsconfig.json` and `vite.config.ts`).
+- Vite server HMR can be disabled with env var `DISABLE_HMR=true`.
+
+## Limitations
+
+- No backend/database (single-browser data scope)
+- No secure authentication or authorization
+- No audit logging or role permissions beyond basic admin mode
+
+## Suggested Next Improvements
+
+- Replace demo auth with secure backend authentication
+- Move LocalStorage data to a real database
+- Add API-based multi-user sync
+- Add tests (unit + integration)
+- Add role-based access control and audit trail
+
+## Git Workflow (Commit + Push to GitHub)
+
+Use these commands from project root:
+
+```bash
+git add README.md
+git commit -m "docs: rewrite README with full project documentation"
+git push origin <your-branch>
+```
+
+If remote is not configured yet:
+
+```bash
+git remote add origin https://github.com/<username>/<repo>.git
+git branch -M main
+git push -u origin main
+```
+
+## License
+
+This repository currently does not define a license file. Add `LICENSE` if open-source distribution is intended.
