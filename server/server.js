@@ -41,9 +41,33 @@ async function startServer() {
     });
   }
 
+  // Global error handling middleware
+  app.use((err, req, res, next) => {
+    console.error('Error:', err);
+    const statusCode = err.statusCode || 500;
+    const message = err.message || 'Internal Server Error';
+    res.status(statusCode).json({
+      success: false,
+      error: message,
+      timestamp: new Date().toISOString(),
+    });
+  });
+
+  // 404 handler
+  app.use((req, res) => {
+    res.status(404).json({
+      success: false,
+      error: 'Route not found',
+      path: req.path,
+    });
+  });
+
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://localhost:${PORT}`);
   });
 }
 
-startServer();
+startServer().catch(err => {
+  console.error('Failed to start server:', err);
+  process.exit(1);
+});
