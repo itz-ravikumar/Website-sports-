@@ -9,6 +9,7 @@ import inventoryRoutes from './routes/inventory.js';
 import requestRoutes from './routes/requests.js';
 import recordRoutes from './routes/records.js';
 import authRoutes from './routes/auth.js';
+import dashboardRoutes from './routes/dashboard.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -24,6 +25,7 @@ async function startServer() {
   app.use('/api/requests', requestRoutes);
   app.use('/api/records', recordRoutes);
   app.use('/api/auth', authRoutes);
+  app.use('/api/dashboard', dashboardRoutes);
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== 'production') {
