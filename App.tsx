@@ -356,7 +356,7 @@ export default function App() {
       const newRequest: SportsRequest = {
         ...requestFormData,
         rollNumber,
-        id: Math.random().toString(36).substr(2, 9),
+        id: Math.random().toString(36).slice(2, 11),
         requestDate: getTodayIsoDate(),
         status: 'Pending',
       };
@@ -394,7 +394,7 @@ export default function App() {
 
       // Create record
       const newRecord: SportsRecord = {
-        id: Math.random().toString(36).substr(2, 9),
+        id: Math.random().toString(36).slice(2, 11),
         studentName: request.studentName,
         rollNumber: request.rollNumber,
         branch: request.branch,
