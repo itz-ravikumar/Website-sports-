@@ -211,8 +211,4 @@ For issues, questions, or suggestions:
 
 This project is licensed under the Apache License 2.0 - see the LICENSE file for details.
 
-## 🙏 Acknowledgments
 
-- Built for **Central Institute of Technology Kokrajhar (CITK)**
-- Powered by **React**, **Express.js**, and **SQLite**
-- Styled with **Tailwind CSS v4**
